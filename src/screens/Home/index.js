@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {useRef}  from 'react';
 import {
   StyleSheet,
   SafeAreaView,
@@ -9,14 +9,15 @@ import {
   Image,
   Dimensions,
   TextInput,
+  Animated
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome5';
 import {fontType, colors} from '../../theme';
 import {SearchNormal1} from 'iconsax-react-native';
 import {
   guardian,
-  circle,
-  profile,
+
+  profileavatar,
   qr,
   chat,
   doctor,
@@ -109,6 +110,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.white(),
   },
+  container_sc:{
+    position: 'absolute',
+    backgroundColor: colors.white(),
+    zIndex: 999,
+    top: 10,
+    left: 0,
+    right: 0,
+    elevation: 1000,
+  },
   title: {
     fontSize: 26,
     fontWeight: '600',
@@ -146,12 +156,13 @@ const styles = StyleSheet.create({
     top: 15,
     left: 10,
   },
-  profileIcon: {
-    position: 'absolute',
-    left: 280,
-    top: -60,
+  profileImage: {
+    borderRadius: 100,
+    left: 290,
+    top: -40,
     height: 50,
     width: 50,
+    marginTop:-65
   },
   backadd: {
     position: 'absolute',
@@ -159,6 +170,7 @@ const styles = StyleSheet.create({
     width: 450,
     height: 450,
     top: -50,
+    zIndex: 1, 
   },
   title: {
     fontSize: 32,
@@ -208,9 +220,17 @@ const code_qr = StyleSheet.create({
 });
 
 export default function Home() {
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const diffClampY = Animated.diffClamp(scrollY, 0, 142);
+const recentY = diffClampY.interpolate({
+    inputRange: [0, 142],
+    outputRange: [0, -142],
+    extrapolate: 'clamp',
+  });
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      {/* <View style={}> */}
+      <Animated.View style={[styles.container_sc, styles.header,{transform: [{translateY: recentY}]}]}>
         <Text
           style={{
             fontSize: 24,
@@ -235,11 +255,18 @@ export default function Home() {
             placeholder="Type Here..."
             onChangeText={this.updateSearch}
           />
-          <Image source={profile} style={styles.profileIcon} />
-          <Image source={circle} style={styles.backadd} />
+          <Image source={profileavatar} style={styles.profileImage} />
+         
         </View>
-      </View>
-      <ScrollView>
+      </Animated.View>
+      {/* </View> */}
+      <Animated.ScrollView
+      showsVerticalScrollIndicator={false}
+      onScroll={Animated.event(
+        [{nativeEvent: {contentOffset: {y: scrollY}}}],
+        {useNativeDriver: true},
+      )}
+      contentContainerStyle={{paddingTop: 142}}>
         <Image source={guardian} style={styles.image} />
         <Text
           style={{
@@ -255,7 +282,7 @@ export default function Home() {
         <Qr />
         <Main />
         <News />
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
