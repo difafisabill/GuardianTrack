@@ -1,7 +1,7 @@
 import React from 'react';
 import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {Home, Profile, Settings, Booking} from '../screens';
+import {Home, Profile, Settings, Booking, AddBlogForm} from '../screens';
 import {Home2, Setting2, ProfileCircle} from 'iconsax-react-native'; 
 import { fontType, colors } from '../theme';
 
@@ -12,7 +12,7 @@ function MainApp() {
     <Tab.Navigator
       screenOptions={{
         tabBarHideOnKeyboard: true,
-        tabBarActiveTintColor: colors.blue(),
+        tabBarActiveTintColor: '#173153',
         tabBarInactiveTintColor: colors.black(),
         tabBarStyle: {
           paddingBottom: 10,
@@ -87,6 +87,18 @@ const Router = () => {
         component={Booking}
         options={{
           headerShown: false, 
+          animationEnabled: true,
+          animationTypeForReplace: 'pop',
+          gestureEnabled: true,
+          gestureDirection : 'horizontal',
+          ...TransitionPresets.SlideFromRightIOS,
+        }}
+      />
+      <Stack.Screen
+        name="AddBlog"
+        component={AddBlogForm}
+        options={{
+          headerShown: false,
           animationEnabled: true,
           animationTypeForReplace: 'pop',
           gestureEnabled: true,

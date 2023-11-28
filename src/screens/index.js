@@ -4,5 +4,6 @@ import Messages from "./Messages";
 import Profile from "./Profile";
 import Settings  from "./Settings";
 import Booking  from "./Booking";
-export {Home, EditProfile, Messages, Profile, Settings, Booking}
+import AddBlogForm  from "./AddBlogForm";
+export {Home, EditProfile, Messages, Profile, Settings, Booking,AddBlogForm}
 

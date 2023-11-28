@@ -8,6 +8,8 @@ const colors = {
     AmericanGreen: (opacity = 1) => `rgba(58, 163, 70, ${opacity})`,
     GreenSage: (opacity = 1) => `rgba(88, 0, 255, ${opacity})`,
     Purple: (opacity = 1) => `rgba(237, 228, 255, ${opacity})`,
-    peach:(opacity=1)=> `rgba(243, 228, 241, ${opacity}`
+    peach:(opacity=1)=> `rgba(243, 228, 241, ${opacity}`,
+    // old_purple:(opacity=1)=> `rgba(148, 0, 255, ${opacity}
+    old_purple: (opacity = 1) => `rgba(148, 0, 255, ${opacity})`,
 }
 export default colors
