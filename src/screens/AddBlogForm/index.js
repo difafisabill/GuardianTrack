@@ -7,11 +7,13 @@ import {
   StyleSheet,
   ScrollView,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import {ArrowLeft} from 'iconsax-react-native';
 import {useNavigation} from '@react-navigation/native';
 import {fontType, colors} from '../../theme';
 import FeatherIcon from 'react-native-vector-icons/Feather';
+import axios from 'axios';
 
 const AddBlogForm = () => {
   const dataCategory = [
@@ -56,6 +58,34 @@ const AddBlogForm = () => {
     outputRange: [0, 40],
     extrapolate: 'clamp',
   });
+
+  const [loading, setLoading] = useState(false);
+  const handleUpload = async () => {
+    setLoading(true);
+    try {
+      await axios
+        .post(
+          'https://656d20a9bcc5618d3c22db06.mockapi.io/guardiantrack/blog/',
+          {
+            title: blogData.title,
+            category: blogData.category,
+            image,
+            content: blogData.content,
+            createdAt: new Date(),
+          },
+        )
+        .then(function (response) {
+          console.log(response);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+      setLoading(false);
+      navigation.navigate('Profile');
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   return (
     <View style={{backgroundColor: '#05141c'}}>
@@ -171,7 +201,12 @@ const AddBlogForm = () => {
             </View>
           </ScrollView>
           <View style={styles.bottomBar}>
-            <TouchableOpacity style={styles.button} onPress={() => {}}>
+            {loading && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color={colors.Purple()} />
+              </View>
+            )}
+            <TouchableOpacity style={styles.button} onPress={handleUpload}>
               <Text style={styles.buttonLabel}>Upload</Text>
             </TouchableOpacity>
           </View>
@@ -320,5 +355,15 @@ const category = StyleSheet.create({
   name: {
     fontSize: 10,
     fontFamily: fontType['Pjs-Medium'],
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.black(0.4),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

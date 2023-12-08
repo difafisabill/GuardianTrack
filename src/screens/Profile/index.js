@@ -1,31 +1,65 @@
-import React, {Component} from 'react';
+import React, {useState,useCallback} from 'react';
 import {
   View,
   ScrollView,
   TouchableOpacity,
   Image,
   Text,
-  SafeAreaView,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import {
   profileavatar,
   arrow,
-  report,
-  location,
-  share,
 } from '../../assets/image/index';
 import {colors, fontType} from '../../theme';
 import {StyleSheet} from 'react-native';
 import { Edit} from 'iconsax-react-native';
-import {useNavigation} from '@react-navigation/native';
+// import FastImage from 'react-native-fast-image';  
+import {useNavigation,useFocusEffect} from '@react-navigation/native';
 import FeatherIcon from 'react-native-vector-icons/Feather';
+import {ItemSmall} from '../../component';
 
 
-export default function Profile() {
+import axios from 'axios';
+
+
+// export default function Profile()  {
+const Profile = () => {
+  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
+  const [blogData, setBlogData] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const getDataBlog = async () => {
+    try {
+      const response = await axios.get(
+        'https://656d20a9bcc5618d3c22db06.mockapi.io/guardiantrack/blog/',
+      );
+      setBlogData(response.data);
+      setLoading(false)
+    } catch (error) {
+        console.error(error);
+    }
+  };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      getDataBlog()
+      setRefreshing(false);
+    }, 1500);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      getDataBlog();
+    }, [])
+  );
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalcrollIndicator={false}>
+      <ScrollView showsVerticalcrollIndicator={false} refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }>
         <View style={styles.header}>
           <TouchableOpacity>
             <Image source={arrow} style={styles.arrow} />
@@ -52,7 +86,6 @@ export default function Profile() {
                     index === 0 && {borderLeftWidth: 0},
                   ]}>
                   <Text style={styles.statsItemText}>{label}</Text>
-
                   <Text style={styles.statsItemValue}>{value}</Text>
                 </View>
               ))}
@@ -63,32 +96,19 @@ export default function Profile() {
             }}>
             <View style={styles.profileAction}>
               <Text style={styles.profileActionText}>Edit Profile</Text>
-
               <FeatherIcon color="#fff" name="edit" size={16} />
             </View>
           </TouchableOpacity>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.options}>
-          <Image source={report} style={styles.iconoptions}></Image>
-          <Text style={styles.textoptions}>Diagnosis</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.options}>
-          <Image source={location} style={styles.iconoptions}></Image>
-          <Text style={styles.textoptions}>Malang, Jawa Timur Indonesia</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.options]}>
-          <Image source={share} style={styles.iconoptions}></Image>
-          <Text style={styles.textoptions}>share</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.options,
-            {marginBottom: 40, backgroundColor: '#fab507', color: '#faf6ed'},
-          ]}>
-          <Text style={styles.textoptions}>Log Out</Text>
-        </TouchableOpacity>
+        
+        <View style={{paddingVertical: 10, gap: 10}}>
+          {loading ? (
+            <ActivityIndicator size={'large'} color={colors.Purple()} />
+          ) : (
+            blogData.map((item, index) => <ItemSmall item={item} key={index} />)
+          )}
+        </View>
       </ScrollView>
       <TouchableOpacity
         style={styles.floatingButton}
@@ -97,7 +117,8 @@ export default function Profile() {
       </TouchableOpacity>
     </View>
   );
-}
+};
+export default Profile;
 
 
 const styles = StyleSheet.create({
