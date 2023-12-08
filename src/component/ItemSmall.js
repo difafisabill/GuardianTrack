@@ -1,4 +1,4 @@
-import {StyleSheet, Text, View, TouchableOpacity} from 'react-native';
+import {StyleSheet, Text, View, TouchableOpacity,Image} from 'react-native';
 
 import {Receipt21, Clock, Message} from 'iconsax-react-native';
 import React from 'react';
@@ -14,15 +14,9 @@ const ItemSmall = ({item}) => {
       onPress={() => navigation.navigate('BlogDetail', {blogId: item.id})}
       // onPress={() => navigation.navigate('Home')}
       >
-      {/* <FastImage
-        style={styles.cardImage}
-        source={{
+      <Image style={styles.cardImage} source={{
           uri: item?.image,
-          headers: {Authorization: 'someAuthToken'},
-          priority: FastImage.priority.high,
-        }}
-        resizeMode={FastImage.resizeMode.cover}
-      /> */}
+        }} />
       <View style={styles.cardContent}>
         <View
           style={{

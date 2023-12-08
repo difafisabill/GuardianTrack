@@ -17,7 +17,7 @@ import axios from 'axios';
 
 const AddBlogForm = () => {
   const dataCategory = [
-    {id: 1, name: 'Scincare'},
+    {id: 1, name: 'Skincare'},
     {id: 2, name: 'Vitamin'},
     {id: 3, name: 'Pola hidup'},
     {id: 4, name: 'Penyakit'},

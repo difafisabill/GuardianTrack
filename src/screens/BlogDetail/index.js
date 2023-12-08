@@ -1,4 +1,4 @@
-import {StyleSheet, Text, View, ScrollView, TouchableOpacity, Animated, ActivityIndicator} from 'react-native';
+import {StyleSheet, Text, View, ScrollView, TouchableOpacity, Animated, ActivityIndicator,Image} from 'react-native';
 import React, {useState, useRef, useEffect} from 'react';
 import {ArrowLeft, Like1, Receipt21, Message, Share, More} from 'iconsax-react-native';
 import {useNavigation} from '@react-navigation/native';
@@ -125,6 +125,9 @@ const BlogDetail = ({route}) => {
               priority: FastImage.priority.high,
             }}
             resizeMode={FastImage.resizeMode.cover}></FastImage> */}
+            <Image style={styles.image} source={{
+          uri: selectedBlog?.image,
+        }} />
           <View
             style={{
               flexDirection: 'row',
