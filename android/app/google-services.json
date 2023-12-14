@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "442913722186",
+    "project_id": "guardiantrackapp",
+    "storage_bucket": "guardiantrackapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:442913722186:android:54e4c2697d5c8579033bb3",
+        "android_client_info": {
+          "package_name": "com.guardiantrack"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5feTMMB9JllO1HtcHguRF69HRSM_wfeM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

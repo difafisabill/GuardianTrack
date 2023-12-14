@@ -1,4 +1,4 @@
-import React, {useState,useCallback} from 'react';
+import React, {useState,useCallback, useEffect} from 'react';
 import {
   View,
   ScrollView,
@@ -15,25 +15,25 @@ import {
 import {colors, fontType} from '../../theme';
 import {StyleSheet} from 'react-native';
 import { Edit} from 'iconsax-react-native';
-// import FastImage from 'react-native-fast-image';  
+ 
 import {useNavigation,useFocusEffect} from '@react-navigation/native';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import {ItemSmall} from '../../component';
+import FastImage from 'react-native-fast-image';
+import firestore from '@react-native-firebase/firestore';
+import {formatNumber} from '../../utils/formatNumber';
 
 
-import axios from 'axios';
 
-
-// export default function Profile()  {
 const Profile = () => {
-  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(true);
   const [blogData, setBlogData] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const getDataBlog = async () => {
     try {
       const response = await axios.get(
-        'https://656d20a9bcc5618d3c22db06.mockapi.io/guardiantrack/blog/',
+        'link endpoint API',
       );
       setBlogData(response.data);
       setLoading(false)
@@ -42,19 +42,42 @@ const Profile = () => {
     }
   };
 
+  useEffect(() => {
+    const subscriber = firestore()
+      .collection('blog')
+      .onSnapshot(querySnapshot => {
+        const blogs = [];
+        querySnapshot.forEach(documentSnapshot => {
+          blogs.push({
+            ...documentSnapshot.data(),
+            id: documentSnapshot.id,
+          });
+        });
+        setBlogData(blogs);
+        setLoading(false);
+      });
+    return () => subscriber();
+  }, []);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
-      getDataBlog()
+      firestore()
+        .collection('blog')
+        .onSnapshot(querySnapshot => {
+          const blogs = [];
+          querySnapshot.forEach(documentSnapshot => {
+            blogs.push({
+              ...documentSnapshot.data(),
+              id: documentSnapshot.id,
+            });
+          });
+          setBlogData(blogs);
+        });
       setRefreshing(false);
     }, 1500);
   }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      getDataBlog();
-    }, [])
-  );
+  
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalcrollIndicator={false} refreshControl={
@@ -108,6 +131,7 @@ const Profile = () => {
           ) : (
             blogData.map((item, index) => <ItemSmall item={item} key={index} />)
           )}
+          {console.log(blogData)}
         </View>
       </ScrollView>
       <TouchableOpacity
