@@ -11,5 +11,6 @@ const colors = {
     peach:(opacity=1)=> `rgba(243, 228, 241, ${opacity}`,
     // old_purple:(opacity=1)=> `rgba(148, 0, 255, ${opacity}
     old_purple: (opacity = 1) => `rgba(148, 0, 255, ${opacity})`,
+    old_blue: (opacity = 1) => `rgba(23,49,83, ${opacity})`,
 }
 export default colors

@@ -1,4 +1,4 @@
-import React, {useRef}  from 'react';
+import React,{useState, useEffect, useRef}  from 'react';
 import {
   StyleSheet,
   SafeAreaView,
@@ -9,7 +9,8 @@ import {
   Image,
   Dimensions,
   TextInput,
-  Animated
+  Animated,
+  ActivityIndicator
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome5';
 import {fontType, colors} from '../../theme';
@@ -28,6 +29,11 @@ import {
 } from '../../assets/image/index';
 
 import {useNavigation} from '@react-navigation/native';
+import {Notification} from 'iconsax-react-native';
+import {ItemSmall} from '../../components';
+import firestore from '@react-native-firebase/firestore';
+
+
 
 const {width} = Dimensions.get('window');
 const home = StyleSheet.create({
@@ -227,6 +233,32 @@ const recentY = diffClampY.interpolate({
     outputRange: [0, -142],
     extrapolate: 'clamp',
   });
+  const [loading, setLoading] = useState(true);
+  const [blogData, setBlogData] = useState([]);
+  useEffect(() => {
+    const fetchBlogData = () => {
+      try {
+        const blogCollection = firestore().collection('blog');
+        const unsubscribeBlog = blogCollection.onSnapshot(querySnapshot => {
+          const blogs = querySnapshot.docs.map(doc => ({
+            ...doc.data(),
+            id: doc.id,
+          }));
+          setBlogData(blogs);
+          setLoading(false);
+        });
+
+        return () => {
+          unsubscribeBlog();
+        };
+      } catch (error) {
+        console.error('Error fetching blog data:', error);
+      }
+    };
+    fetchBlogData();
+  }, []);
+  const horizontalData = blogData.slice(0, 5);
+  const verticalData = blogData.slice(5);
   return (
     <View style={styles.container}>
       {/* <View style={}> */}

@@ -8,20 +8,18 @@ import {
   ScrollView,
   Animated,
   ActivityIndicator,
+  KeyboardAvoidingView
 } from 'react-native';
-
 import {useNavigation} from '@react-navigation/native';
 import {fontType, colors} from '../../theme';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import axios from 'axios';
-
 import FastImage from 'react-native-fast-image';
 import {ArrowLeft, AddSquare, Add} from 'iconsax-react-native';
-
 import ImagePicker from 'react-native-image-crop-picker';
 import storage from '@react-native-firebase/storage';
 import firestore from '@react-native-firebase/firestore';
-
+import auth from '@react-native-firebase/auth';
 
 
 const AddBlogForm = () => {
@@ -78,6 +76,7 @@ const AddBlogForm = () => {
 
     setLoading(true);
     try {
+      const authorId = auth().currentUser.uid;
       await reference.putFile(image);
       const url = await reference.getDownloadURL();
       await firestore().collection('blog').add({
@@ -88,7 +87,12 @@ const AddBlogForm = () => {
         totalComments: blogData.totalComments,
         totalLikes: blogData.totalLikes,
         createdAt: new Date(),
+        authorId
       });
+
+      
+
+
       setLoading(false);
       console.log('Blog added!');
       navigation.navigate('Profile');
@@ -112,6 +116,10 @@ const AddBlogForm = () => {
   };
 
   return (
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      enabled>
     <View style={{backgroundColor: '#05141c'}}>
       {/* <SafeAreaView style={{ flex: 1, backgroundColor: '#F8E2F7' }}> */}
 
@@ -119,7 +127,9 @@ const AddBlogForm = () => {
         style={[styles.header, {transform: [{translateY: translateHeader}]}]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <ArrowLeft color={colors.white()} variant="Linear" size={24} />
+          
         </TouchableOpacity>
+        
         <Animated.Text
           style={[
             styles.headerTitle,
@@ -278,9 +288,11 @@ const AddBlogForm = () => {
         </View>
       )}
     </View>
+    
       </Animated.ScrollView>
       {/* </SafeAreaView>  */}
     </View>
+    </KeyboardAvoidingView>
   );
 };
 

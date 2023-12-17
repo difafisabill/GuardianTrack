@@ -1,64 +1,87 @@
-import React, {useState,useCallback, useEffect} from 'react';
-import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  Text,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
-import {
-  profileavatar,
-  arrow,
-} from '../../assets/image/index';
-import {colors, fontType} from '../../theme';
-import {StyleSheet} from 'react-native';
-import { Edit} from 'iconsax-react-native';
- 
-import {useNavigation,useFocusEffect} from '@react-navigation/native';
-import FeatherIcon from 'react-native-vector-icons/Feather';
-import {ItemSmall} from '../../component';
+import {ScrollView, StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, RefreshControl, Image} from 'react-native';
+import {Edit, Setting2} from 'iconsax-react-native';
+import React, {useEffect, useState, useCallback, useRef} from 'react';
 import FastImage from 'react-native-fast-image';
+import {ItemSmall} from '../../component';
+import {useNavigation} from '@react-navigation/native';
+import {fontType, colors} from '../../theme';
 import firestore from '@react-native-firebase/firestore';
 import {formatNumber} from '../../utils/formatNumber';
-
-
-
+import auth from '@react-native-firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {formatDate} from '../../utils/formatDate';
+import ActionSheet from 'react-native-actions-sheet';
+import FeatherIcon from 'react-native-vector-icons/Feather';
+import {
+  profileavatar,
+} from '../../assets/image/index';
 const Profile = () => {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
   const [blogData, setBlogData] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const getDataBlog = async () => {
-    try {
-      const response = await axios.get(
-        'link endpoint API',
-      );
-      setBlogData(response.data);
-      setLoading(false)
-    } catch (error) {
-        console.error(error);
-    }
+  const [profileData, setProfileData] = useState(null);
+  const actionSheetRef = useRef(null);
+  const openActionSheet = () => {
+    actionSheetRef.current?.show();
   };
-
+  const closeActionSheet = () => {
+    actionSheetRef.current?.hide();
+  };
   useEffect(() => {
-    const subscriber = firestore()
-      .collection('blog')
-      .onSnapshot(querySnapshot => {
-        const blogs = [];
-        querySnapshot.forEach(documentSnapshot => {
-          blogs.push({
-            ...documentSnapshot.data(),
-            id: documentSnapshot.id,
+    const user = auth().currentUser;
+    const fetchBlogData = () => {
+      try {
+        if (user) {
+          const userId = user.uid;
+          const blogCollection = firestore().collection('blog');
+          const query = blogCollection.where('authorId', '==', userId);
+          const unsubscribeBlog = query.onSnapshot(querySnapshot => {
+            const blogs = querySnapshot.docs.map(doc => ({
+              ...doc.data(),
+              id: doc.id,
+            }));
+            setBlogData(blogs);
+            setLoading(false);
           });
-        });
-        setBlogData(blogs);
-        setLoading(false);
-      });
-    return () => subscriber();
-  }, []);
 
+          return () => {
+            unsubscribeBlog();
+          };
+        }
+      } catch (error) {
+        console.error('Error fetching blog data:', error);
+      }
+    };
+
+    const fetchProfileData = () => {
+      try {
+        const user = auth().currentUser;
+        if (user) {
+          const userId = user.uid;
+          const userRef = firestore().collection('users').doc(userId);
+
+          const unsubscribeProfile = userRef.onSnapshot(doc => {
+            if (doc.exists) {
+              const userData = doc.data();
+              setProfileData(userData);
+              fetchBlogData();
+            } else {
+              console.error('Dokumen pengguna tidak ditemukan.');
+            }
+          });
+
+          return () => {
+            unsubscribeProfile();
+          };
+        }
+      } catch (error) {
+        console.error('Error fetching profile data:', error);
+      }
+    };
+    fetchBlogData();
+    fetchProfileData();
+  }, []);
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
@@ -77,61 +100,79 @@ const Profile = () => {
       setRefreshing(false);
     }, 1500);
   }, []);
-  
+  const handleLogout = async () => {
+    try {
+      closeActionSheet();
+      await auth().signOut();
+      await AsyncStorage.removeItem('userData');
+      navigation.replace('Login');
+    } catch (error) {
+      console.error(error);
+    }
+  };
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalcrollIndicator={false} refreshControl={
+      <View style={styles.header}>
+        <TouchableOpacity onPress={openActionSheet}>
+          <Setting2 color={colors.black()} variant="Linear" size={24} />
+        </TouchableOpacity>
+      </View>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          gap: 10,
+          paddingVertical: 20,
+        }}
+        refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }>
-        <View style={styles.header}>
-          <TouchableOpacity>
-            <Image source={arrow} style={styles.arrow} />
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity style={styles.profileInfo}>
+        <View style={{gap: 15, alignItems: 'center'}}>
           <Image source={profileavatar} style={styles.profileImage} />
-        </TouchableOpacity>
-        <TouchableOpacity style={{flex: 1, backgroundColor: '#FBFCFF'}}>
-          <View style={styles.container_profile}>
-            <Text style={styles.title}>Madrona Rose</Text>
-            <Text style={styles.profileEmail}>rose.fox@mail.com</Text>
-
-            <View style={styles.stats}>
-              {[
-                {label: 'Age', value: '25'},
-                {label: 'Job Type', value: 'Arts'},
-                {label: 'Location', value: 'Malang'},
-              ].map(({label, value}, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.statsItem,
-                    index === 0 && {borderLeftWidth: 0},
-                  ]}>
-                  <Text style={styles.statsItemText}>{label}</Text>
-                  <Text style={styles.statsItemValue}>{value}</Text>
-                </View>
-              ))}
+          {/* <FastImage
+            style={profile.pic}
+            source={{
+              uri: profileData?.photoUrl,
+              headers: {Authorization: 'someAuthToken'},
+              priority: FastImage.priority.high,
+            }}
+            resizeMode={FastImage.resizeMode.cover}
+          /> */}
+          <View style={{gap: 5, alignItems: 'center'}}>
+            <Text style={profile.name}>{profileData?.fullName}</Text>
+            <Text style={profile.info}>
+              Member since {formatDate(profileData?.createdAt)}
+            </Text>
+          </View>
+          <View style={{flexDirection: 'row', gap: 20}}>
+            <View style={{alignItems: 'center', gap: 5}}>
+              <Text style={profile.sum}>{profileData?.totalPost}</Text>
+              <Text style={profile.tag}>Posted</Text>
             </View>
-            <TouchableOpacity
-            onPress={() => {
-              // handle onPress
-            }}>
-            <View style={styles.profileAction}>
+            <View style={{alignItems: 'center', gap: 5}}>
+              <Text style={profile.sum}>
+                {formatNumber(profileData?.followingCount)}
+              </Text>
+              <Text style={profile.tag}>Following</Text>
+            </View>
+            <View style={{alignItems: 'center', gap: 5}}>
+              <Text style={profile.sum}>
+                {formatNumber(profileData?.followersCount)}
+              </Text>
+              <Text style={profile.tag}>Follower</Text>
+            </View>
+          </View>
+          <View style={styles.profileAction}>
               <Text style={styles.profileActionText}>Edit Profile</Text>
               <FeatherIcon color="#fff" name="edit" size={16} />
             </View>
-          </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-        
+        </View>
         <View style={{paddingVertical: 10, gap: 10}}>
           {loading ? (
             <ActivityIndicator size={'large'} color={colors.Purple()} />
           ) : (
             blogData.map((item, index) => <ItemSmall item={item} key={index} />)
           )}
-          {console.log(blogData)}
         </View>
       </ScrollView>
       <TouchableOpacity
@@ -139,86 +180,78 @@ const Profile = () => {
         onPress={() => navigation.navigate('AddBlog')}>
         <Edit color={colors.white()} variant="Linear" size={20} />
       </TouchableOpacity>
+      <ActionSheet
+        ref={actionSheetRef}
+        containerStyle={{
+          borderTopLeftRadius: 25,
+          borderTopRightRadius: 25,
+        }}
+        indicatorStyle={{
+          width: 100,
+        }}
+        gestureEnabled={true}
+        defaultOverlayOpacity={0.3}>
+        <TouchableOpacity
+          style={{
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingVertical: 15,
+          }}
+          onPress={handleLogout}>
+          <Text
+            style={{
+              fontFamily: fontType['Pjs-Medium'],
+              color: colors.black(),
+              fontSize: 18,
+            }}>
+            Log out
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingVertical: 15,
+          }}
+          onPress={closeActionSheet}>
+          <Text
+            style={{
+              fontFamily: fontType['Pjs-Medium'],
+              color: 'red',
+              fontSize: 18,
+            }}>
+            Cancel
+          </Text>
+        </TouchableOpacity>
+      </ActionSheet>
     </View>
   );
 };
 export default Profile;
-
-
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.white(),
     flex: 1,
-  },
-  container_profile: {
-    padding: 24,
+    backgroundColor: colors.white(),
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   header: {
-    padding: 10,
-    width: '100%',
-    backgroundColor: '#A5C0DD',
-    height: 150,
-  },
-  arrow: {
-    width: 25,
-    height: 25,
-    marginLeft: 5,
-    marginTop: 10,
-  },
-  profileInfo: {
-    alignItems: 'center',
-  },
-  profileImage: {
-    width: 140,
-    height: 140,
-    borderRadius: 100,
-    marginTop: -70,
-  },
-  profilename: {
-    fontFamily: fontType['Pjs-Regular'],
-    fontSize: 20,
-    fontWeight: 'bold',
-    padding: 10,
-    color: colors.black(),
-    top: 12,
-    textAlign: 'center',
-  },
-  bio: {
-    fontFamily: fontType['Pjs-Regular'],
-    fontSize: 16,
-    color: colors.grey(),
-    top: 12,
-    padding: 10,
-    marginTop: -15,
-    textAlign: 'center',
-  },
-
-  options: {
-    alignSelf: 'center',
+    paddingHorizontal: 24,
+    justifyContent: 'flex-end',
     flexDirection: 'row',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    width: '90%',
-    padding: 20,
-    paddingBottom: 22,
-    borderRadius: 10,
-    shadowOpacity: 70,
-    elevation: 15,
-    marginTop: 20,
+    alignItems: 'center',
+    height: 52,
+    elevation: 8,
+    paddingTop: 8,
+    paddingBottom: 4,
   },
-  iconoptions: {
-    width: 20,
-    height: 20,
-  },
-  textoptions: {
-    fontFamily: fontType['Pjs-Regular'],
-    fontSize: 15,
-    color: '#818181',
-    fontWeight: 'bold',
-    marginLeft: 10,
-    top: 12,
-    marginTop: -15,
-    textAlign: 'center',
+  title: {
+    fontSize: 20,
+    fontFamily: fontType['Pjs-ExtraBold'],
+    color: colors.black(),
   },
   floatingButton: {
     backgroundColor: '#173153',
@@ -237,62 +270,11 @@ const styles = StyleSheet.create({
 
     elevation: 8,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#1d1d1d',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  stats: {
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    padding: 20,
-    borderRadius: 12,
-    shadowColor: '#90a0ca',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 1,
-  },
-  statsItem: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 0,
-    borderLeftWidth: 1,
-    borderColor: 'rgba(189, 189, 189, 0.32)',
-  },
-  statsItemText: {
-    fontSize: 14,
-    fontWeight: '400',
-    lineHeight: 18,
-    color: '#778599',
-    marginBottom: 5,
-  },
-  statsItemValue: {
-    fontSize: 16,
+  profileActionText: {
+    marginRight: 8,
+    fontSize: 15,
     fontWeight: '600',
-    lineHeight: 20,
-    color: '#121a26',
-  },
-  profileName: {
-    marginTop: 12,
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#090909',
-  },
-  profileEmail: {
-    marginTop: 6,
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#848484',
-    textAlign: 'center',
+    color: '#fff',
   },
   profileAction: {
     marginTop: 12,
@@ -304,12 +286,46 @@ const styles = StyleSheet.create({
     backgroundColor: '#173153',
     borderRadius: 12,
   },
-  profileActionText: {
-    marginRight: 8,
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 100,
+    marginTop: 15,
   },
 });
-
-
+const profile = StyleSheet.create({
+  pic: {width: 100, height: 100, borderRadius: 50},
+  name: {
+    color: colors.black(),
+    fontSize: 20,
+    fontFamily: fontType['Pjs-ExtraBold'],
+    textTransform: 'capitalize',
+  },
+  info: {
+    fontSize: 12,
+    fontFamily: fontType['Pjs-Regular'],
+    color: colors.grey(),
+  },
+  sum: {
+    fontSize: 16,
+    fontFamily: fontType['Pjs-SemiBold'],
+    color: colors.black(),
+  },
+  tag: {
+    fontSize: 14,
+    fontFamily: fontType['Pjs-Regular'],
+    color: colors.grey(0.5),
+  },
+  buttonEdit: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: colors.grey(0.1),
+    borderRadius: 10,
+  },
+  buttonText: {
+    fontSize: 14,
+    fontFamily: fontType['Pjs-SemiBold'],
+    color: colors.black(),
+  },
+  
+});
